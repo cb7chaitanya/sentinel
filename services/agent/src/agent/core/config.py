@@ -8,7 +8,7 @@ class Settings(BaseServiceSettings):
     port: int = 8005
 
     anthropic_api_key: str | None = None
-    agent_model: str = "claude-sonnet-5"
+    agent_model: str = "claude-opus-4-8"
     memory_service_url: str = "http://memory:8004"
 
 
