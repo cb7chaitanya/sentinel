@@ -1,0 +1,19 @@
+Analyze the following warehouse data and produce insights, potential
+issues, and recommendations, each with citations back to the specific
+items below that support it.
+
+## Warehouse state (warehouse_id=$warehouse_id, as of $generated_at)
+
+$warehouse_state_json
+
+## Recent events
+
+$recent_events_json
+
+## Inventory records
+
+$inventory_records_json
+
+## Safety rules
+
+$safety_rules_json
