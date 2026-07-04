@@ -6,10 +6,11 @@ that reason over warehouse operations.
 
 This repo started as a bootstrap — folder structure, typed configuration,
 dependency injection wiring, logging, and Docker support for every service —
-and business logic is landing service by service. The **ingestion**
-service (camera capture) is implemented; the rest (`vision`, `events`,
-`memory`, `agent`) are still scaffolds with `NotImplementedError` stubs
-behind their domain Protocols.
+and business logic is landing service by service. `ingestion` (camera
+capture), `vision` (detection/tracking), `events` (zone occupancy + the
+activity-event stream), and `memory` (persistence + query API) are
+implemented; `agent` is still a scaffold with `NotImplementedError` stubs
+behind its domain Protocols.
 
 ## Layout
 
@@ -82,6 +83,31 @@ only produces frames — it has no notion of AI or detections.
 - **Observability**: `GET /api/v1/streams` and
   `GET /api/v1/streams/{camera_id}/health` report per-camera FPS, frames
   read/dropped, reconnect count, and connection state.
+
+## Memory service
+
+Maintains current warehouse state in PostgreSQL and serves it back over a
+small, deterministic query API — no LLMs, no inference, just storage and
+retrieval.
+
+- **Storage model**: `entities` is one row per `(camera_id, track_id)` ever
+  observed (workers/forklifts/pallets/boxes), continuously updated in
+  place — "currently active" is a pure function of `last_seen_at` vs. an
+  explicit `as_of` time, not a stored, mutable flag that could drift out
+  of sync. `zone_occupancy` is an interval table (`exited_at IS NULL`
+  means still inside) that serves as both current occupancy and history
+  from the same rows. `events` and `alerts` are separate: events are an
+  immutable activity log, alerts are mutable records with a lifecycle
+  (open → acknowledged → resolved).
+- **API**: `get_current_state`, `get_recent_events`, and
+  `get_entity_history` (see `core/warehouse_memory_service.py`), exposed
+  over `GET /api/v1/state/{warehouse_id}`, `GET /api/v1/events`, and
+  `GET /api/v1/entities/{entity_id}/history`. Write endpoints
+  (`/observations`, `/zone-transitions`, `/events`, `/alerts`) are how
+  upstream services populate it.
+- **Migrations**: `services/memory/migrations` (Alembic). Run
+  `uv run alembic upgrade head` from `services/memory` against a running
+  Postgres before starting the service or its tests.
 
 ## Local development
 
