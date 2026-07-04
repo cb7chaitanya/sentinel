@@ -7,7 +7,11 @@ install:
 	cd apps/web && npm install
 
 test:
-	uv run pytest $(SERVICES) libs/sentinel_common
+	# Run separately: every service has its own tests/__init__.py, and
+	# pytest resolves them all to the same top-level "tests" module name
+	# if given multiple service directories in one invocation.
+	uv run pytest libs/sentinel_common
+	for service in $(SERVICES); do uv run pytest $$service || exit 1; done
 
 lint:
 	uv run ruff check .

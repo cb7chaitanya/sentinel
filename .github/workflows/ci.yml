@@ -8,6 +8,22 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sentinel
+          POSTGRES_PASSWORD: sentinel
+          POSTGRES_DB: sentinel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sentinel"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://sentinel:sentinel@localhost:5432/sentinel_test
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -15,7 +31,21 @@ jobs:
           python-version: "3.12"
       - run: uv sync --all-packages
       - run: uv run ruff check .
-      - run: uv run pytest apps/gateway services/ingestion services/vision services/events services/memory services/agent libs/sentinel_common
+      - name: Apply memory service migrations
+        working-directory: services/memory
+        run: uv run alembic upgrade head
+      # Run each service's tests separately: every service has its own
+      # tests/__init__.py, and pytest's import mode resolves them all to
+      # the same top-level "tests" module name if given multiple service
+      # directories in one invocation, so a single combined `pytest a b c`
+      # call fails with a module collision rather than collecting anything.
+      - run: uv run pytest libs/sentinel_common
+      - run: uv run pytest apps/gateway
+      - run: uv run pytest services/ingestion
+      - run: uv run pytest services/vision
+      - run: uv run pytest services/events
+      - run: uv run pytest services/memory
+      - run: uv run pytest services/agent
 
   web:
     runs-on: ubuntu-latest
