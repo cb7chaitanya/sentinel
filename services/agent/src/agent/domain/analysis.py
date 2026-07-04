@@ -13,6 +13,11 @@ schema).
 `generated_at`) supplied by the caller from `AgentContext`, not by the
 model -- there's no reason to ask an LLM to echo back facts the caller
 already knows for certain.
+
+`Citation`/`CitationKind` live in `domain/citation.py` and are re-exported
+here for backwards compatibility with existing imports -- the operations
+copilot (`domain/copilot.py`) needs the same shape for its own grounded
+answers, so they moved to a module neither capability owns.
 """
 
 import uuid
@@ -21,26 +26,18 @@ from enum import StrEnum
 
 from sentinel_common.schemas.common import SentinelModel
 
+from agent.domain.citation import Citation, CitationKind
 
-class CitationKind(StrEnum):
-    EVENT = "event"
-    ENTITY = "entity"
-    INVENTORY_RECORD = "inventory_record"
-    SAFETY_RULE = "safety_rule"
-
-
-class Citation(SentinelModel):
-    """A pointer at one specific item in the `AgentContext`.
-
-    `reference_id` is that item's id verbatim (an event's `id`, an
-    entity's `entity_id`, an inventory record's `sku`, a safety rule's
-    `id`) -- not a description of it. `detail` is a short human-readable
-    excerpt for display; it is not itself evidence.
-    """
-
-    kind: CitationKind
-    reference_id: str
-    detail: str
+__all__ = [
+    "AgentAnalysis",
+    "AnalysisContent",
+    "Citation",
+    "CitationKind",
+    "Insight",
+    "PotentialIssue",
+    "Recommendation",
+    "Severity",
+]
 
 
 class Severity(StrEnum):
