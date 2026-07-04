@@ -2,11 +2,10 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-
 from memory.core.config import get_settings
 from memory.infra import models  # noqa: F401 - registers ORM models on Base.metadata
 from sentinel_common.db.base import Base
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 config = context.config
 
