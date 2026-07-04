@@ -14,6 +14,10 @@ class Settings(BaseServiceSettings):
     memory_service_url: str = "http://memory:8004"
     agent_service_url: str = "http://agent:8005"
 
+    # How often the warehouse-state WebSocket relay re-polls memory for
+    # each warehouse with at least one connected subscriber.
+    warehouse_state_poll_interval_seconds: float = 2.0
+
 
 @lru_cache
 def get_settings() -> Settings:
