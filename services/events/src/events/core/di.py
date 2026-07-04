@@ -6,6 +6,7 @@ from fastapi import Depends
 from sentinel_common.di import singleton
 
 from events.core.config import Settings, get_settings
+from events.core.event_engine import EventEngine
 from events.domain.event_rule import EventRule
 from events.domain.zone_engine import ZoneEngine
 from events.infra.polygon_zone_engine import PolygonZoneEngine
@@ -29,5 +30,17 @@ def get_zone_engine() -> ZoneEngine:
     )
 
 
+@singleton
+def get_event_engine() -> EventEngine:
+    settings = get_settings()
+    return EventEngine(
+        get_zone_engine(),
+        motion_speed_threshold=settings.motion_speed_threshold,
+        worker_labels=settings.worker_labels,
+        worker_display_name=settings.worker_display_name,
+    )
+
+
 EventRuleDep = Annotated[EventRule, Depends(get_event_rule_engine)]
 ZoneEngineDep = Annotated[ZoneEngine, Depends(get_zone_engine)]
+EventEngineDep = Annotated[EventEngine, Depends(get_event_engine)]

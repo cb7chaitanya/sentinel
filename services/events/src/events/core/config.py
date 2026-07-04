@@ -15,6 +15,13 @@ class Settings(BaseServiceSettings):
     zones: list[Zone] = []
     zone_exit_grace_period_seconds: float = 0.0
 
+    # px/sec of bounding-box-center motion; below this an object counts as
+    # stationary. Matches the ByteTrack velocity units from the vision
+    # service (see sentinel_common.schemas.detection.Velocity).
+    motion_speed_threshold: float = 5.0
+    worker_labels: list[str] = ["person"]
+    worker_display_name: str = "Worker"
+
 
 @lru_cache
 def get_settings() -> Settings:
