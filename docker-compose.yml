@@ -1,0 +1,93 @@
+name: sentinel
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: sentinel
+      POSTGRES_DB: sentinel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    env_file: apps/gateway/.env.example
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ingestion
+      - vision
+      - events
+      - memory
+      - agent
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: services/ingestion/Dockerfile
+    env_file: services/ingestion/.env.example
+    ports:
+      - "8001:8001"
+
+  vision:
+    build:
+      context: .
+      dockerfile: services/vision/Dockerfile
+    env_file: services/vision/.env.example
+    ports:
+      - "8002:8002"
+
+  events:
+    build:
+      context: .
+      dockerfile: services/events/Dockerfile
+    env_file: services/events/.env.example
+    ports:
+      - "8003:8003"
+
+  memory:
+    build:
+      context: .
+      dockerfile: services/memory/Dockerfile
+    env_file: services/memory/.env.example
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sentinel:sentinel@postgres:5432/sentinel
+    ports:
+      - "8004:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  agent:
+    build:
+      context: .
+      dockerfile: services/agent/Dockerfile
+    env_file: services/agent/.env.example
+    ports:
+      - "8005:8005"
+    depends_on:
+      - memory
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_GATEWAY_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway
+
+volumes:
+  postgres_data:

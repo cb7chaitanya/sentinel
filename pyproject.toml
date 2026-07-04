@@ -1,0 +1,24 @@
+[tool.uv.workspace]
+members = [
+    "apps/gateway",
+    "services/ingestion",
+    "services/vision",
+    "services/events",
+    "services/memory",
+    "services/agent",
+    "libs/sentinel_common",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
