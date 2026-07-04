@@ -17,7 +17,9 @@ from agent.domain.context import (
     SafetyRule,
     WarehouseStateSnapshot,
 )
-from agent.domain.grounding import filter_grounded
+from agent.domain.copilot import CopilotAnswerContent
+from agent.domain.evidence import AlertRecord, RetrievedEvidence
+from agent.domain.grounding import filter_grounded, ground_copilot_answer
 from sentinel_common.schemas.event import EventRead, EventType
 
 WAREHOUSE_ID = uuid.uuid4()
@@ -242,3 +244,69 @@ def test_multiple_conclusions_are_filtered_independently() -> None:
     result = filter_grounded(analysis, context)
 
     assert [i.id for i in result.insights] == ["i1"]
+
+
+def _evidence() -> RetrievedEvidence:
+    return RetrievedEvidence(
+        entities=[
+            EntitySnapshot(
+                entity_id=ENTITY_ID,
+                entity_type="forklift",
+                label="forklift",
+                camera_id=CAMERA_ID,
+                last_seen_at=T0,
+            )
+        ],
+        events=[_event()],
+        alerts=[
+            AlertRecord(
+                id=uuid.uuid4(), severity="high", status="open", summary="test alert", created_at=T0
+            )
+        ],
+    )
+
+
+def test_ground_copilot_answer_returns_content_when_fully_grounded() -> None:
+    evidence = _evidence()
+    content = CopilotAnswerContent(
+        answer="The forklift is real.",
+        citations=[Citation(kind=CitationKind.ENTITY, reference_id=str(ENTITY_ID), detail="it")],
+    )
+
+    result = ground_copilot_answer(content, evidence)
+
+    assert result is content
+
+
+def test_ground_copilot_answer_returns_none_for_no_citations() -> None:
+    content = CopilotAnswerContent(answer="Sure, it's over there.", citations=[])
+
+    result = ground_copilot_answer(content, _evidence())
+
+    assert result is None
+
+
+def test_ground_copilot_answer_returns_none_for_hallucinated_citation() -> None:
+    content = CopilotAnswerContent(
+        answer="It's in Zone B.",
+        citations=[Citation(kind=CitationKind.ENTITY, reference_id=str(uuid.uuid4()), detail="?")],
+    )
+
+    result = ground_copilot_answer(content, _evidence())
+
+    assert result is None
+
+
+def test_ground_copilot_answer_accepts_a_real_alert_citation() -> None:
+    evidence = _evidence()
+    alert_id = evidence.alerts[0].id
+    content = CopilotAnswerContent(
+        answer="It fired because of X.",
+        citations=[
+            Citation(kind=CitationKind.ALERT, reference_id=str(alert_id), detail="the alert")
+        ],
+    )
+
+    result = ground_copilot_answer(content, evidence)
+
+    assert result is content
