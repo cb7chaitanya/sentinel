@@ -2,7 +2,6 @@ import uuid
 from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
-
 from ingestion.core.di import get_stream_registry
 from ingestion.domain.camera import ConnectionState, StreamHealth
 from ingestion.main import app

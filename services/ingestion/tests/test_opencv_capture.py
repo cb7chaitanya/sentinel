@@ -5,7 +5,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pytest
-
 from ingestion.domain.camera import ConnectionState, StreamSource, StreamSourceKind
 from ingestion.infra.opencv_capture import (
     OpenCvStreamReader,
