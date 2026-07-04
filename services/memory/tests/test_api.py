@@ -143,6 +143,16 @@ def test_full_round_trip_observation_zone_event_and_history(client: TestClient) 
     assert events_response.status_code == 200
     assert len(events_response.json()) == 1
 
+    event_id = events_response.json()[0]["id"]
+    single_event_response = client.get(f"/api/v1/events/{event_id}")
+    assert single_event_response.status_code == 200
+    assert single_event_response.json()["id"] == event_id
+
+
+def test_get_event_404_for_unknown_event(client: TestClient) -> None:
+    response = client.get(f"/api/v1/events/{uuid.uuid4()}")
+    assert response.status_code == 404
+
 
 def test_alert_lifecycle(client: TestClient) -> None:
     created = client.post(
@@ -152,6 +162,10 @@ def test_alert_lifecycle(client: TestClient) -> None:
     assert created.status_code == 201
     alert_id = created.json()["id"]
     assert created.json()["status"] == "open"
+
+    fetched = client.get(f"/api/v1/alerts/{alert_id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["id"] == alert_id
 
     acknowledged = client.post(f"/api/v1/alerts/{alert_id}/acknowledge")
     assert acknowledged.status_code == 200
@@ -165,4 +179,9 @@ def test_alert_lifecycle(client: TestClient) -> None:
 
 def test_acknowledge_unknown_alert_is_404(client: TestClient) -> None:
     response = client.post(f"/api/v1/alerts/{uuid.uuid4()}/acknowledge")
+    assert response.status_code == 404
+
+
+def test_get_alert_404_for_unknown_alert(client: TestClient) -> None:
+    response = client.get(f"/api/v1/alerts/{uuid.uuid4()}")
     assert response.status_code == 404

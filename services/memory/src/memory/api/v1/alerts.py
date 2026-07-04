@@ -14,6 +14,14 @@ async def record_alert(alert: AlertCreate, memory: WarehouseMemoryServiceDep) ->
     return await memory.record_alert(alert)
 
 
+@router.get("/alerts/{alert_id}", response_model=AlertRead)
+async def get_alert(alert_id: uuid.UUID, alerts: AlertRepositoryDep) -> AlertRead:
+    alert = await alerts.get(alert_id)
+    if alert is None:
+        raise HTTPException(status_code=404, detail=f"no alert {alert_id}")
+    return alert
+
+
 @router.post("/alerts/{alert_id}/acknowledge", response_model=AlertRead)
 async def acknowledge_alert(alert_id: uuid.UUID, alerts: AlertRepositoryDep) -> AlertRead:
     updated = await alerts.update_status(alert_id, AlertStatus.ACKNOWLEDGED)
