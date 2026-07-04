@@ -116,6 +116,7 @@ class EventEngine:
                     event_type=event_type,
                     occurred_at=timestamp,
                     summary=summary,
+                    warehouse_id=transition.warehouse_id,
                     track_id=transition.track_id,
                     zone_id=transition.zone_id,
                     zone_name=transition.zone_name,

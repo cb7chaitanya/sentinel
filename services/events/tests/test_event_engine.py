@@ -67,6 +67,7 @@ def test_object_entering_a_zone_emits_a_strongly_typed_zone_entered_event() -> N
     assert event.event_type is EventType.ZONE_ENTERED
     assert event.summary == "Forklift entered Loading Dock"
     assert event.camera_id == CAMERA_ID
+    assert event.warehouse_id == WAREHOUSE_ID
     assert event.track_id == 1
     assert event.zone_id == zone.id
     assert event.zone_name == "Loading Dock"

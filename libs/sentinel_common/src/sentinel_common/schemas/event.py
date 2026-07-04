@@ -36,6 +36,11 @@ class EventBase(SentinelModel):
     occurred_at: datetime
     summary: str
 
+    # Optional because not every producer can resolve it: a zone-derived
+    # event (ZONE_ENTERED/EXITED) knows its warehouse via the zone, but a
+    # plain motion event has no camera->warehouse registry to consult yet.
+    warehouse_id: uuid.UUID | None = None
+
     # Strongly-typed detail fields, populated according to event_type --
     # kept as explicit typed fields (not a free-form dict) so consumers
     # never need to parse anything out of `summary` or `metadata`.
