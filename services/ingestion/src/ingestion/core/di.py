@@ -12,6 +12,7 @@ from fastapi import Depends
 from sentinel_common.di import singleton
 
 from ingestion.core.config import Settings, get_settings
+from ingestion.core.frame_broadcaster import FrameBroadcaster
 from ingestion.core.stream_registry import StreamRegistry
 from ingestion.domain.camera import StreamReaderFactory
 from ingestion.infra.opencv_capture import OpenCvStreamReaderFactory
@@ -30,10 +31,18 @@ def get_stream_reader_factory() -> StreamReaderFactory:
 
 
 @singleton
+def get_frame_broadcaster() -> FrameBroadcaster:
+    return FrameBroadcaster()
+
+
+@singleton
 def get_stream_registry() -> StreamRegistry:
     settings = get_settings()
-    return StreamRegistry(get_stream_reader_factory(), settings.camera_sources)
+    return StreamRegistry(
+        get_stream_reader_factory(), settings.camera_sources, get_frame_broadcaster()
+    )
 
 
 StreamReaderFactoryDep = Annotated[StreamReaderFactory, Depends(get_stream_reader_factory)]
 StreamRegistryDep = Annotated[StreamRegistry, Depends(get_stream_registry)]
+FrameBroadcasterDep = Annotated[FrameBroadcaster, Depends(get_frame_broadcaster)]
