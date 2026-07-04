@@ -1,0 +1,25 @@
+[project]
+name = "sentinel-events"
+version = "0.1.0"
+description = "Transforms raw detections into higher-level warehouse events (loitering, zone breach, dwell time, ...)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "sentinel-common",
+]
+
+[tool.uv.sources]
+sentinel-common = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/events"]
