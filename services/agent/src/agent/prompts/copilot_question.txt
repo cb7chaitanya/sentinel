@@ -1,0 +1,19 @@
+Answer the following operator question using only the evidence below.
+
+## Question
+
+$question
+
+(warehouse_id=$warehouse_id, evidence as of $generated_at)
+
+## Entities
+
+$entities_json
+
+## Events
+
+$events_json
+
+## Alerts
+
+$alerts_json

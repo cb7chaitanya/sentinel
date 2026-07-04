@@ -9,10 +9,13 @@ without depending on packaging metadata correctly bundling non-Python files.
 """
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from string import Template
 
 from agent.domain.context import AgentContext
+from agent.domain.copilot import CopilotQuestion
+from agent.domain.evidence import RetrievedEvidence
 
 _PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
@@ -39,5 +42,27 @@ def render_analysis_prompt(context: AgentContext) -> str:
         ),
         safety_rules_json=json.dumps(
             [rule.model_dump(mode="json") for rule in context.safety_rules], indent=2
+        ),
+    )
+
+
+def copilot_system_prompt() -> str:
+    return _load("copilot_system.txt")
+
+
+def render_copilot_prompt(question: CopilotQuestion, evidence: RetrievedEvidence) -> str:
+    template = Template(_load("copilot_question.txt"))
+    return template.substitute(
+        question=question.question,
+        warehouse_id=question.warehouse_id,
+        generated_at=datetime.now(UTC).isoformat(),
+        entities_json=json.dumps(
+            [entity.model_dump(mode="json") for entity in evidence.entities], indent=2
+        ),
+        events_json=json.dumps(
+            [event.model_dump(mode="json") for event in evidence.events], indent=2
+        ),
+        alerts_json=json.dumps(
+            [alert.model_dump(mode="json") for alert in evidence.alerts], indent=2
         ),
     )

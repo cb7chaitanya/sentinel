@@ -1,8 +1,21 @@
 import uuid
 from datetime import UTC, datetime
 
-from agent.domain.context import AgentContext, InventoryRecord, SafetyRule, WarehouseStateSnapshot
-from agent.infra.prompts import render_analysis_prompt, system_prompt
+from agent.domain.context import (
+    AgentContext,
+    EntitySnapshot,
+    InventoryRecord,
+    SafetyRule,
+    WarehouseStateSnapshot,
+)
+from agent.domain.copilot import CopilotQuestion
+from agent.domain.evidence import RetrievedEvidence
+from agent.infra.prompts import (
+    copilot_system_prompt,
+    render_analysis_prompt,
+    render_copilot_prompt,
+    system_prompt,
+)
 from sentinel_common.schemas.event import EventRead, EventType
 
 WAREHOUSE_ID = uuid.uuid4()
@@ -63,3 +76,39 @@ def test_render_analysis_prompt_handles_empty_context() -> None:
     rendered = render_analysis_prompt(context)
 
     assert "[]" in rendered
+
+
+def test_copilot_system_prompt_mentions_grounding_rules() -> None:
+    text = copilot_system_prompt()
+
+    assert "citation" in text.lower()
+    assert "only" in text.lower()
+
+
+def test_render_copilot_prompt_includes_question_and_warehouse_id() -> None:
+    question = CopilotQuestion(warehouse_id=WAREHOUSE_ID, question="Where is pallet P103?")
+
+    rendered = render_copilot_prompt(question, RetrievedEvidence())
+
+    assert "Where is pallet P103?" in rendered
+    assert str(WAREHOUSE_ID) in rendered
+
+
+def test_render_copilot_prompt_embeds_evidence() -> None:
+    question = CopilotQuestion(warehouse_id=WAREHOUSE_ID, question="Where is it?")
+    evidence = RetrievedEvidence(
+        entities=[
+            EntitySnapshot(
+                entity_id=uuid.uuid4(),
+                entity_type="pallet",
+                label="pallet",
+                camera_id=CAMERA_ID,
+                last_seen_at=T0,
+            )
+        ]
+    )
+
+    rendered = render_copilot_prompt(question, evidence)
+
+    assert "pallet" in rendered
+    assert "[]" in rendered  # empty events/alerts still render
