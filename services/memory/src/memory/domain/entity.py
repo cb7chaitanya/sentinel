@@ -16,8 +16,17 @@ import uuid
 from datetime import datetime, timedelta
 from enum import StrEnum
 
-from sentinel_common.schemas.common import SentinelModel, TimestampedModel
+from sentinel_common.schemas.common import TimestampedModel
 from sentinel_common.schemas.detection import BoundingBox, Velocity
+from sentinel_common.schemas.entity import EntityObservation
+
+__all__ = [
+    "DEFAULT_LABEL_ENTITY_TYPES",
+    "EntityObservation",
+    "EntityRead",
+    "EntityType",
+    "classify_entity_type",
+]
 
 
 class EntityType(StrEnum):
@@ -52,26 +61,6 @@ def classify_entity_type(
     """
     active_mapping = mapping if mapping is not None else DEFAULT_LABEL_ENTITY_TYPES
     return active_mapping.get(label.lower(), EntityType.OTHER)
-
-
-class EntityObservation(SentinelModel):
-    """One tick's sighting of a tracked object, as recorded into memory.
-
-    Deliberately not `sentinel_common.Detection`: memory additionally needs
-    a `warehouse_id` (detections have no notion of warehouse) and has no
-    use for detector confidence (a detection-quality signal, not a state
-    one). `entity_type` is derived from `label` by the repository via
-    `classify_entity_type`, not supplied by the caller -- classification
-    stays centralized and consistent in one place.
-    """
-
-    warehouse_id: uuid.UUID
-    camera_id: uuid.UUID
-    track_id: int
-    label: str
-    bounding_box: BoundingBox
-    velocity: Velocity | None = None
-    observed_at: datetime
 
 
 class EntityRead(TimestampedModel):
