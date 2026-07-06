@@ -1,3 +1,4 @@
+import uuid
 from functools import lru_cache
 
 from sentinel_common.config import BaseServiceSettings
@@ -14,6 +15,15 @@ class Settings(BaseServiceSettings):
 
     zones: list[Zone] = []
     zone_exit_grace_period_seconds: float = 0.0
+
+    # Every `Zone` already names its own warehouse, but a plain detection
+    # (no zone membership) has no warehouse of its own to report -- there's
+    # no camera registry yet (see services/ingestion/domain/camera.py's
+    # `CameraRegistry` Protocol) to resolve one from. This is the stopgap:
+    # every camera this deployment ingests from should have an entry here,
+    # or its observations/motion events are dropped/unattributed (see
+    # `core/ingest_service.py`).
+    camera_warehouse_map: dict[uuid.UUID, uuid.UUID] = {}
 
     # px/sec of bounding-box-center motion; below this an object counts as
     # stationary. Matches the ByteTrack velocity units from the vision
